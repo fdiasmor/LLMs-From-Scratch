@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyTorch
+*.pt
+*.pth
+*.ckpt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+
+# Logs
+*.log
+
+# Data
+data/
+datasets/
+*.csv
+*.tsv
+*.txt
+
+# Models (keep only best)
+*_model.pt
+!best_*.pt
