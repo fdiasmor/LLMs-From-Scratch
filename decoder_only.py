@@ -374,32 +374,35 @@ class DecoderOnlyTransformer(nn.Module):
     ) -> torch.Tensor:
         """
         Create combined padding + causal mask.
-        
+
         We need both:
-        1. Padding mask: Don't attend to padding tokens
-        2. Causal mask: Don't attend to future tokens
-        
+        1) Padding mask: don't attend to padding tokens
+        2) Causal mask: don't attend to future tokens
+
         Args:
             x: Input indices (batch_size, seq_length)
             pad_idx: Index of padding token
-            
         Returns:
-            Combined mask (batch_size, 1, seq_length, seq_length)
+            (batch_size, 1, seq_length, seq_length) float
         """
         batch_size, seq_length = x.size()
         device = x.device
-        
-        # Padding mask: (batch_size, 1, 1, seq_length)
-        padding_mask = self.create_padding_mask(x, pad_idx)
-        
-        # Causal mask: (1, 1, seq_length, seq_length)
-        causal_mask = self.create_causal_mask(seq_length, device)
-        
-        # Combine: both masks must be True to attend
-        # Broadcasting handles dimension differences
+
+        # Padding mask: (B, 1, 1, S), bool
+        padding_mask = self.create_padding_mask(x, pad_idx).to(torch.bool)
+
+        # Causal mask: (1, 1, S, S), bool
+        causal_mask = self.create_causal_mask(seq_length, device).to(torch.bool)
+
+        # Combine with broadcasting: both must be True to allow attention
+        # Result: (B, 1, S, S), bool
         combined_mask = padding_mask & causal_mask
+        # or: combined_mask = torch.logical_and(padding_mask, causal_mask)
+
+        # We want 1 where combined_mask==True and 0 otherwise
+        additive_mask = torch.where(combined_mask == True, torch.tensor(1.0, device=device), torch.tensor(0.0, device=device))
         
-        return combined_mask
+        return additive_mask
     
     def forward(
         self,

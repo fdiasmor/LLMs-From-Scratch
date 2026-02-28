@@ -430,17 +430,22 @@ class EncoderDecoderTransformer(nn.Module):
         """
         batch_size, seq_length = tgt.size()
         device = tgt.device
-        
-        # Padding mask
-        padding_mask = self.create_padding_mask(tgt, pad_idx)
-        
-        # Causal mask
-        causal_mask = self.create_causal_mask(seq_length, device)
-        
-        # Combine
+
+        # Padding mask: (B, 1, 1, S), bool
+        padding_mask = self.create_padding_mask(tgt, pad_idx).to(torch.bool)
+
+        # Causal mask: (1, 1, S, S), bool
+        causal_mask = self.create_causal_mask(seq_length, device).to(torch.bool)
+
+        # Combine with broadcasting: both must be True to allow attention
+        # Result: (B, 1, S, S), bool
         combined_mask = padding_mask & causal_mask
-        
-        return combined_mask
+        # or: combined_mask = torch.logical_and(padding_mask, causal_mask)
+ 
+        # We want 0 where combined_mask==True, and -inf where combined_mask==False
+        additive_mask = torch.where(combined_mask == True, torch.tensor(1.0, device=device), torch.tensor(0.0, device=device))
+
+        return additive_mask
     
     def encode(
         self,
